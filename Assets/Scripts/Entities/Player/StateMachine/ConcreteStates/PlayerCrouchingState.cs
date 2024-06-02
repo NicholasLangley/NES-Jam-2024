@@ -28,7 +28,7 @@ public class PlayerCrouchingState : PlayerState
         {
             _playerStateMachine.changeState(_player._playerAirborneState);
         } 
-        else if (Input.GetAxisRaw("Jump") > 0)
+        else if (Input.GetButtonDown("Jump"))
         {
             _playerStateMachine.changeState(_player._playerJumpingState);
         }

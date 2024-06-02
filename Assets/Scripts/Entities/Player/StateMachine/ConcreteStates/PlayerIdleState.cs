@@ -27,10 +27,11 @@ public class PlayerIdleState : PlayerState
         {
             _playerStateMachine.changeState(_player._playerAirborneState);
         }
-        else if (Input.GetAxisRaw("Jump") > 0)
+        else if (Input.GetButtonDown("Jump"))
         {
             _playerStateMachine.changeState(_player._playerJumpingState);
         }
+        _player.Move();
     }
 
     public override void AnimationTriggerEvent(PlayerController.ANIMATION_TRIGGER_TYPE animationTriggerType)

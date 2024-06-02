@@ -65,6 +65,8 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
 
     #endregion
 
+    Camera camera;
+
     void Awake()
     {
         _StateMachine = new PlayerStateMachine();
@@ -87,6 +89,8 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
         _health = _maxHealth;
 
         _StateMachine.Initialize(_playerIdleState);
+
+        camera = Camera.main;
     }
 
     // Update is called once per frame
@@ -146,11 +150,21 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
     public void Move()
     {
         CheckIfGrounded();
+        CheckForWallCollision();
 
         Vector3 nextPos = transform.position;
         nextPos.x += _currentXSpeed * Time.deltaTime;
         nextPos.y += _currentYSpeed * Time.deltaTime;
         transform.position = nextPos;
+
+        UpdateCameraPosition();
+    }
+
+    public void UpdateCameraPosition()
+    {
+        Vector3 newPos = camera.transform.position;
+        newPos.x = transform.position.x;
+        camera.transform.position = newPos;
     }
 
     public void checkDirectionToFace(float accel)
@@ -164,12 +178,66 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
 
     public void CheckIfGrounded()
     {
-         _isGrounded = _groundCollider.IsTouchingLayers(_groundLayers) && !_isJumping;
+       /* _isGrounded = _groundCollider.IsTouchingLayers(_groundLayers) && !_isJumping;
 
 
-        if (_isGrounded) { if (_currentYSpeed < 0) { _currentYSpeed = 0; } }
-        else { Fall(); }
+       if (_isGrounded) 
+        { 
+            if (_currentYSpeed < 0) { _currentYSpeed = 0; }
+            //push player up to not be clipping in floor
+            Vector3 fixClippingPos = transform.localPosition;
+            fixClippingPos.y = Mathf.Ceil(fixClippingPos.y);
+            transform.position = fixClippingPos;
+        }
+       else { Fall(); }*/
+
+        _isGrounded = false;
+        int rayCount = 3;
+        for (int i = -1; i < rayCount - 1; i++)
+        {
+            Vector2 rayOrigin = new Vector2(transform.position.x + i * 0.9f, transform.position.y);
+
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.down, 0.0625f, _groundLayers);
+            if (hit.collider != null) {
+                _isGrounded = true;
+                //set player height to ground height to prevent floating or clipping
+                Vector3 groundPos = transform.localPosition;
+                groundPos.y = hit.point.y;
+                transform.position = groundPos;
+                if (_currentYSpeed < 0) { _currentYSpeed = 0; }
+                return; 
+            }
+        }
+
+        Fall();
+
     }
+
+    public void CheckForWallCollision()
+    {
+        if (_currentXSpeed == 0) { return; }
+
+        Vector2 collisionCheckDirection;
+
+        if (_currentXSpeed > 0) { collisionCheckDirection = Vector2.right; }
+        else { collisionCheckDirection = Vector2.left; }
+
+
+        int rayCount = 5;
+        for(int i = 0; i <= rayCount; i++)
+        {
+            Vector2 rayOrigin = new Vector2(transform.position.x, transform.position.y + i);
+            //prevent minor floor clipping from stopping movement
+            if (i == 0) {
+                rayOrigin.y += 0.25f; 
+            }
+
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, collisionCheckDirection, 1.01f, _groundLayers);
+            if (hit.collider != null) { _currentXSpeed = 0; return; }
+        }
+
+    }
+
 
     //extra
     public void Decelerate()
@@ -186,7 +254,7 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
 
     public void Jump()
     {
-        _currentYSpeed = _intialJumpVelocity;
+        _currentYSpeed = _intialJumpVelocity + Mathf.Abs(_currentXSpeed)/_maxXSpeed * _intialJumpVelocity / 6.0f;
         _isJumping = true;
     }
 

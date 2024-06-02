@@ -20,7 +20,7 @@ public class PlayerAirborneState : PlayerState
 
     public override void FrameUpdate()
     {
-        if (_player._currentYSpeed <= 0)
+        if (_player._currentYSpeed <= 0.15f)
         {
             _player.changeAnimation(PlayerController.PLAYER_ANIMATION.Falling);
             _player.PauseAnimation();
@@ -29,7 +29,7 @@ public class PlayerAirborneState : PlayerState
 
         if (_player._currentYSpeed == 0 && _player._isGrounded)
         {
-            _playerStateMachine.changeState(Input.GetAxisRaw("Vertical") < 0 ? _player._playerCrouchingState : Input.GetAxisRaw("Horizontal") != 0 ? _player._playerWalkingState : _player._playerIdleState);
+            _playerStateMachine.changeState(Input.GetAxisRaw("Vertical") < 0 ? _player._playerCrouchingState : _player._currentXSpeed != 0 ? _player._playerWalkingState : _player._playerIdleState);
         }
         else { AirControl(); }
     }
