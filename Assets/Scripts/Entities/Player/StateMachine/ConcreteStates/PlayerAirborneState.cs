@@ -20,7 +20,17 @@ public class PlayerAirborneState : PlayerState
 
     public override void FrameUpdate()
     {
-        if (_player._currentYSpeed <= 0.15f)
+        _player._coyoteTimer += Time.deltaTime;
+         if(Input.GetButtonDown("Jump") && !_player._isJumping && _player._coyoteTimer <= _player._coyoteTime) { _playerStateMachine.changeState(_player._playerJumpingState); return; }
+
+        if (Input.GetButtonDown("Fire1"))
+        {
+            if (Input.GetAxisRaw("Vertical") < 0) { _playerStateMachine.changeState(_player._playerStabCrouchState); }
+            else { _playerStateMachine.changeState(_player._playerStabState); }
+            return;
+        }
+
+        if (_player._currentYSpeed <= 0f)
         {
             _player.changeAnimation(PlayerController.PLAYER_ANIMATION.Falling);
             _player.PauseAnimation();

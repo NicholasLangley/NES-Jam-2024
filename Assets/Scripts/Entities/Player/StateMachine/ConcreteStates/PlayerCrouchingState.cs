@@ -20,6 +20,8 @@ public class PlayerCrouchingState : PlayerState
 
     public override void FrameUpdate()
     {
+        _player.checkDirectionToFace(Input.GetAxisRaw("Horizontal"));
+
         if (Input.GetAxisRaw("Vertical") >= 0)
         {
             _playerStateMachine.changeState(_player._currentXSpeed == 0 ? _player._playerIdleState : _player._playerWalkingState);
@@ -27,10 +29,14 @@ public class PlayerCrouchingState : PlayerState
         else if (!_player._isGrounded)
         {
             _playerStateMachine.changeState(_player._playerAirborneState);
-        } 
+        }
         else if (Input.GetButtonDown("Jump"))
         {
             _playerStateMachine.changeState(_player._playerJumpingState);
+        }
+        else if (Input.GetButtonDown("Fire1")) 
+        {
+            _playerStateMachine.changeState(_player._playerStabCrouchState);
         }
         else { _player.Decelerate(); _player.Move(); }
     }

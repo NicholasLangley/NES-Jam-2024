@@ -30,6 +30,10 @@ public class PlayerWalkingState : PlayerState
         {
             _playerStateMachine.changeState(_player._playerJumpingState);
         }
+        else if (Input.GetButtonDown("Fire1"))
+        {
+            _playerStateMachine.changeState(_player._playerStabState);
+        }
         else { Walk(); }
     }
 

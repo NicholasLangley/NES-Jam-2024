@@ -31,6 +31,10 @@ public class PlayerIdleState : PlayerState
         {
             _playerStateMachine.changeState(_player._playerJumpingState);
         }
+        else if (Input.GetButtonDown("Fire1"))
+        {
+            _playerStateMachine.changeState(_player._playerStabState);
+        }
         _player.Move();
     }
 

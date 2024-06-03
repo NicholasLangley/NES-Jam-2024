@@ -22,7 +22,7 @@ public class PlayerJumpingState : PlayerState
 
     public override void FrameUpdate()
     {
-        
+        _player._coyoteTime += Time.deltaTime;
     }
 
     public override void AnimationTriggerEvent(PlayerController.ANIMATION_TRIGGER_TYPE animationTriggerType)

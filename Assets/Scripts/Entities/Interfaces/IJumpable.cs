@@ -6,5 +6,9 @@ public interface IJumpable
 {
     bool _isJumping { get; set; }
 
-    void Jump();
+    float _coyoteTime { get; set; }
+
+    float _coyoteTimer { get; set; }
+
+void Jump();
 }
