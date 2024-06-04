@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable, IJumpable, IFallable
+public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable, IJumpable, IFallable, IAnimateable
 {
     #region speed variables
 
@@ -23,9 +23,12 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
 
     #region animations
 
+    [Header ("Animator")]
+    [SerializeField]
     Animator _animator;
-    public enum PLAYER_ANIMATION {Idle, Walking, Crouching, Jumping, Falling, Attacking, CrouchAttacking }
+    public enum PLAYER_ANIMATION {Idle, Walking, Crouching, Jumping, Falling, Attacking, CrouchAttacking, Damaged }
     PLAYER_ANIMATION _currentAnimation = PLAYER_ANIMATION.Idle;
+    [SerializeField]
     SpriteRenderer _renderer;
 
     #endregion
@@ -35,7 +38,11 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
     
     public int _health { get; set; }
 
-    
+    [field: SerializeField] public bool _damageBounceDirectionIsRight { get; set; }
+    [field: SerializeField] public float _bounceYVelocity { get; set; }
+    [field: SerializeField] public float _bounceSpeed { get; set; }
+
+
     [field: SerializeField, Header("IDamageable")] public int _maxHealth { get; set; }
 
     //IMoveable
@@ -70,12 +77,14 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
     public PlayerStabState _playerStabState { get; set; }
     public PlayerStabCrouchingState _playerStabCrouchState { get; set; }
 
+    public PlayerDamagedState _playerDamagedState { get; set; }
+
     #endregion
 
     #region Hitboxes
 
     [SerializeField]
-    BoxCollider2D attackHitBox, crouchAttackHitBox;
+    BoxCollider2D _attackHitBox, _crouchAttackHitBox;
 
     #endregion
 
@@ -91,14 +100,15 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
         _playerAirborneState = new PlayerAirborneState(this, _StateMachine);
         _playerStabState = new PlayerStabState(this, _StateMachine);
         _playerStabCrouchState = new PlayerStabCrouchingState(this, _StateMachine);
+        _playerDamagedState = new PlayerDamagedState(this, _StateMachine);
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        _animator = GetComponent<Animator>();
-        _renderer = GetComponent<SpriteRenderer>();
-        _currentAnimation = PLAYER_ANIMATION.Idle;
+
+        _currentAnimation = PLAYER_ANIMATION.Jumping;
+        changeAnimation(PLAYER_ANIMATION.Idle);
 
         _currentXSpeed = 0;
         _currentYSpeed = 0;
@@ -115,26 +125,7 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
         _StateMachine.currentState.FrameUpdate();
     }
 
-    #region animations
-    public void changeAnimation(PLAYER_ANIMATION nextAnimation)
-    {
-        if (_currentAnimation == nextAnimation) { return; }
 
-        _animator.Play(System.Enum.GetName(typeof(PLAYER_ANIMATION), nextAnimation));
-        _currentAnimation = nextAnimation;
-    }
-
-    public void PauseAnimation()
-    {
-        _animator.speed = 0;
-    }
-
-    public void UnpauseAnimation()
-    {
-        _animator.speed = 1.0f;
-    }
-
-    #endregion
 
     #region Damageable
 
@@ -188,7 +179,16 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
         if (accel != 0) 
         {
             _isFacingRight = accel > 0;
-            _renderer.flipX = !_isFacingRight; 
+            _renderer.flipX = !_isFacingRight;
+
+            //flip hitboxes
+            Vector3 nextPos = _attackHitBox.transform.localPosition;
+            nextPos.x =  _isFacingRight ? Mathf.Abs(nextPos.x) : -1.0f * Mathf.Abs(nextPos.x);
+            _attackHitBox.transform.localPosition = nextPos;
+
+            nextPos = _crouchAttackHitBox.transform.localPosition;
+            nextPos.x = _isFacingRight ? Mathf.Abs(nextPos.x) : -1.0f * Mathf.Abs(nextPos.x);
+            _crouchAttackHitBox.transform.localPosition = nextPos;
         }
     }
 
@@ -203,11 +203,14 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.down, 0.0625f, _groundLayers);
             if (hit.collider != null) {
                 _isGrounded = true;
-                //set player height to ground height to prevent floating or clipping
-                Vector3 groundPos = transform.localPosition;
-                groundPos.y = hit.point.y;
-                transform.position = groundPos;
-                if (_currentYSpeed < 0) { _currentYSpeed = 0; }
+                if (_currentYSpeed < 0)
+                {
+                    //set player height to ground height to prevent floating or clipping
+                    Vector3 groundPos = transform.localPosition;
+                    groundPos.y = hit.point.y;
+                    transform.position = groundPos;
+                    _currentYSpeed = 0; 
+                }
                 _coyoteTimer = 0.0f;
                 return; 
             }
@@ -275,28 +278,55 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
 
     #endregion
 
+    #region animations
+    public void changeAnimation(PLAYER_ANIMATION nextAnimation)
+    {
+        if (_currentAnimation == nextAnimation) { return; }
+
+        _animator.Play(System.Enum.GetName(typeof(PLAYER_ANIMATION), nextAnimation));
+        _currentAnimation = nextAnimation;
+    }
+
+    public void PauseAnimation()
+    {
+        _animator.speed = 0;
+    }
+
+    public void UnpauseAnimation()
+    {
+        _animator.speed = 1.0f;
+    }
+
+    #endregion
+
     #region hitbox management
 
     public void enableAttackHitBox()
     {
-        attackHitBox.enabled = true;
+        _attackHitBox.enabled = true;
     }
 
     public void disableAttackHitBox()
     {
-        attackHitBox.enabled = false;
+        _attackHitBox.enabled = false;
     }
 
     public void enableCrouchAttackHitBox()
     {
-        crouchAttackHitBox.enabled = true;
+        _crouchAttackHitBox.enabled = true;
     }
 
     public void disableCrouchAttackHitBox()
     {
-        crouchAttackHitBox.enabled = false;
+        _crouchAttackHitBox.enabled = false;
     }
 
     #endregion
+
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        _StateMachine.currentState.HandleTriggerCollision(collision);
+    }
 
 }

@@ -42,6 +42,16 @@ public class PlayerWalkingState : PlayerState
 
     }
 
+    public override void HandleTriggerCollision(Collider2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Enemy") || collision.gameObject.layer == LayerMask.NameToLayer("EnemyAttack"))
+        {
+            _player._damageBounceDirectionIsRight = collision.transform.localPosition.x < _player.transform.position.x;
+
+            _playerStateMachine.changeState(_player._playerDamagedState);
+        }
+    }
+
     private void Walk()
     {
         float accelertionAmount = _player._xAcceleration * Time.deltaTime;

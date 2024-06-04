@@ -19,4 +19,6 @@ public class PlayerState {
 
     public virtual void AnimationTriggerEvent(PlayerController.ANIMATION_TRIGGER_TYPE animationTriggerType) { }
 
+    public virtual void HandleTriggerCollision(Collider2D collision) { }
+
 }

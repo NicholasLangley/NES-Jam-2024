@@ -32,4 +32,14 @@ public class PlayerStabState : PlayerState
             _playerStateMachine.changeState(_player._playerAirborneState);
         }
     }
+
+    public override void HandleTriggerCollision(Collider2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Enemy") || collision.gameObject.layer == LayerMask.NameToLayer("EnemyAttack"))
+        {
+            _player._damageBounceDirectionIsRight = collision.transform.localPosition.x < _player.transform.position.x;
+
+            _playerStateMachine.changeState(_player._playerDamagedState);
+        }
+    }
 }
