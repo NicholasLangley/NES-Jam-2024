@@ -42,6 +42,6 @@ public class PlayerDamagedState : PlayerState
     {
         _player._currentYSpeed = _player._bounceYVelocity;
         _player._currentXSpeed = _player._damageBounceDirectionIsRight ? _player._bounceSpeed : -_player._bounceSpeed;
-        _player.checkDirectionToFace(_player._currentXSpeed);
+        _player.checkDirectionToFace(-_player._currentXSpeed);
     }
 }

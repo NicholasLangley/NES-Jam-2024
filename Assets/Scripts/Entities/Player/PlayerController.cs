@@ -36,7 +36,11 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
     #region interface fields
     //IDamageable  IHealable
     
+
     public int _health { get; set; }
+    [Header("IDamageable /  IHealable")]
+    [SerializeField]
+    HealthBar _healthBar;
 
     [field: SerializeField] public bool _damageBounceDirectionIsRight { get; set; }
     [field: SerializeField] public float _bounceYVelocity { get; set; }
@@ -117,6 +121,11 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
         _StateMachine.Initialize(_playerIdleState);
 
         camera = Camera.main;
+
+        for(int i = 0; i < _maxHealth; i += 2)
+        {
+            _healthBar.addHeart();
+        }
     }
 
     // Update is called once per frame
@@ -132,7 +141,8 @@ public class PlayerController : MonoBehaviour, IDamageable, IHealable, IMoveable
     public void Damage(int damage)
     {
         _health -= damage;
-        if (_health < 0) { Kill(); }
+        _healthBar.updateHealthBar(_health);
+        if (_health <= 0) { Kill(); }
     }
 
     public void Kill()

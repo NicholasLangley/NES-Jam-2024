@@ -20,6 +20,7 @@ public class PlayerAirborneState : PlayerState
 
     public override void FrameUpdate()
     {
+        //coyote time
         _player._coyoteTimer += Time.deltaTime;
          if(Input.GetButtonDown("Jump") && !_player._isJumping && _player._coyoteTimer <= _player._coyoteTime) { _playerStateMachine.changeState(_player._playerJumpingState); return; }
 
@@ -33,9 +34,9 @@ public class PlayerAirborneState : PlayerState
         if (_player._currentYSpeed <= 0f)
         {
             _player.changeAnimation(PlayerController.PLAYER_ANIMATION.Falling);
-            _player.PauseAnimation();
             _player._isJumping = false;
         }
+        else { _player.changeAnimation(PlayerController.PLAYER_ANIMATION.Jumping); }
 
         if (_player._currentYSpeed == 0 && _player._isGrounded)
         {
